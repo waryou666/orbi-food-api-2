@@ -27,8 +27,6 @@ app.use(cors({
   allowedHeaders: ["Content-Type", "Authorization"],
 }));
 
-// ให้ OPTIONS ผ่านทุก route ชัวร์ ๆ
-app.options("*", cors());
 
 app.use(express.json());
 
