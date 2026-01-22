@@ -6,28 +6,38 @@ const { Pool } = require("pg");
 
 const app = express();
 
-/* ---------------------------
-   CORS (PROD จำกัดโดเมน)
----------------------------- */
-const ALLOWED_ORIGINS = [      
-  "https://grand-raindrop-d23326.netlify.app",
+const ALLOWED_ORIGINS = [
   "https://orbi-food.com",
+  "https://www.orbi-food.com",
+  "https://grand-raindrop-d23326.netlify.app",
 ];
 
-// ให้รองรับกรณี request ไม่มี origin (เช่น curl/postman)
 app.use(cors({
-  origin: function (origin, cb) {
-    if (!origin) return cb(null, true);
-    if (ALLOWED_ORIGINS.includes(origin)) return cb(null, true);
-    return cb(new Error("CORS blocked: " + origin));
+  origin: function (origin, callback) {
+    // allow requests with no origin (like mobile apps, curl, postman)
+    if (!origin) return callback(null, true);
+
+    if (ALLOWED_ORIGINS.includes(origin)) {
+      return callback(null, true);
+    }
+
+    return callback(new Error("CORS not allowed: " + origin));
   },
-  methods: ["GET", "POST", "PUT", "DELETE"],
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization"],
 }));
 
+// ให้ OPTIONS ผ่านทุก route ชัวร์ ๆ
+app.options("*", cors());
+
 app.use(express.json());
 
-const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  ssl: { rejectUnauthorized: false },
+});
+
 
 function signAdminToken() {
   return jwt.sign({ role: "admin" }, process.env.JWT_SECRET, { expiresIn: "7d" });
